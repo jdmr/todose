@@ -49,6 +49,12 @@ func main() {
 	router.HandleFunc("/api/v1/users/{userID}", updateUser).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/users/{userID}", deleteUser).Methods(http.MethodDelete)
 
+	router.HandleFunc("/api/v1/todos", getTodos).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/todos", createTodo).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/todos/{todoID}", getTodo).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/todos/{todoID}", updateTodo).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/todos/{todoID}", deleteTodo).Methods(http.MethodDelete)
+
 	srv := &http.Server{
 		Addr:    ":8080",
 		Handler: router,
