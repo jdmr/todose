@@ -12,7 +12,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/spf13/viper"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var client *mongo.Client
@@ -26,16 +25,7 @@ func main() {
 		log.Fatalf("Error reading config file: %s\n", err)
 	}
 	ctx := context.Background()
-	mongoURL := viper.GetString("mongo.prod")
-	client, err = mongo.Connect(ctx, options.Client().ApplyURI(mongoURL))
-	if err != nil {
-		log.Fatalf("Error connecting to MongoDB: %s\n", err)
-	}
-	err = client.Ping(ctx, nil)
-	if err != nil {
-		log.Fatalf("Error connecting to MongoDB: %s\n", err)
-	}
-	log.Println("Connected to MongoDB!")
+	client, err := getMongoClient(ctx)
 	if err != nil {
 		log.Fatalf("Error connecting to MongoDB: %s\n", err)
 	}
