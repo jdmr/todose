@@ -14,6 +14,7 @@ type Todo struct {
 	ID     string `json:"id" bson:"_id"`
 	Title  string `json:"title"`
 	Status string `json:"status"`
+	Owner  *User  `json:"owner"`
 }
 
 func getTodos(w http.ResponseWriter, r *http.Request) {
