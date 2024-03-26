@@ -16,6 +16,7 @@ type User struct {
 }
 
 func getUsers(w http.ResponseWriter, r *http.Request) {
+	log.Println("Getting users...")
 	coll := client.Database(viper.GetString("mongo.db")).Collection("users")
 	cursor, err := coll.Find(r.Context(), bson.M{})
 	if err != nil {
@@ -50,6 +51,7 @@ func getUsers(w http.ResponseWriter, r *http.Request) {
 }
 
 func getUser(w http.ResponseWriter, r *http.Request) {
+	log.Println("Getting user...")
 	params := mux.Vars(r)
 	userID := params["userID"]
 	if userID == "" {
@@ -78,6 +80,7 @@ func getUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func createUser(w http.ResponseWriter, r *http.Request) {
+	log.Println("Creating user...")
 	user := &User{}
 	err := json.NewDecoder(r.Body).Decode(user)
 	if err != nil {
@@ -102,6 +105,7 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func updateUser(w http.ResponseWriter, r *http.Request) {
+	log.Println("Updating user...")
 	params := mux.Vars(r)
 	userID := params["userID"]
 	if userID == "" {
@@ -134,6 +138,7 @@ func updateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func deleteUser(w http.ResponseWriter, r *http.Request) {
+	log.Println("Deleting user...")
 	params := mux.Vars(r)
 	userID := params["userID"]
 	if userID == "" {
