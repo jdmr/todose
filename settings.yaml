@@ -1,0 +1,3 @@
+mongo:
+  prod: mongodb://localhost:27017
+  db: todose
