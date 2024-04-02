@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 	"net/http/httptest"
 	"strings"
@@ -57,15 +58,16 @@ func TestGetUsers(t *testing.T) {
 		t.Errorf("Expected status code 200, got %d", w.Code)
 	}
 
-	// Check the user
-	user = &User{}
-	err = coll.FindOne(ctx, bson.M{"_id": "testuser"}).Decode(user)
+	users := []User{}
+	err = json.NewDecoder(w.Body).Decode(&users)
 	if err != nil {
-		t.Fatalf("Error finding user: %s\n", err)
+		t.Fatalf("Error decoding response: %s\n", err)
 	}
-	if user.Name != "Alice" {
-		t.Errorf("Expected name Alice, got %s", user.Name)
+	if len(users) < 1 {
+		t.Errorf("Expected at least one user, got %d", len(users))
 	}
+
+	coll.DeleteOne(ctx, bson.M{"_id": "testuser"})
 }
 
 func TestGetUser(t *testing.T) {
@@ -103,15 +105,16 @@ func TestGetUser(t *testing.T) {
 		t.Errorf("Expected status code 200, got %d", w.Code)
 	}
 
-	// Check the user
-	user = &User{}
-	err = coll.FindOne(ctx, bson.M{"_id": "testuser"}).Decode(user)
+	testUser := &User{}
+	err = json.NewDecoder(w.Body).Decode(testUser)
 	if err != nil {
-		t.Fatalf("Error finding user: %s\n", err)
+		t.Fatalf("Error decoding response: %s\n", err)
 	}
-	if user.Name != "Alice" {
-		t.Errorf("Expected name Alice, got %s", user.Name)
+	if testUser.Name != "Alice" {
+		t.Errorf("Expected name Alice, got %s", testUser.Name)
 	}
+
+	coll.DeleteOne(ctx, bson.M{"_id": "testuser"})
 }
 
 func TestCreateUser(t *testing.T) {
@@ -122,6 +125,9 @@ func TestCreateUser(t *testing.T) {
 		t.Fatalf("Error connecting to MongoDB: %s\n", err)
 	}
 	defer client.Disconnect(ctx)
+
+	coll := getUsersCollection(client)
+	coll.DeleteOne(ctx, bson.M{"_id": "testuser2"})
 
 	// Create the user
 	body := `{"id":"testuser2","name": "Bob"}`
@@ -135,7 +141,7 @@ func TestCreateUser(t *testing.T) {
 
 	// Check the user
 	user := &User{}
-	coll := getUsersCollection(client)
+
 	err = coll.FindOne(ctx, bson.M{"_id": "testuser2"}).Decode(user)
 	if err != nil {
 		t.Fatalf("Error finding user: %s\n", err)
@@ -143,6 +149,8 @@ func TestCreateUser(t *testing.T) {
 	if user.Name != "Bob" {
 		t.Errorf("Expected name Bob, got %s", user.Name)
 	}
+
+	coll.DeleteOne(ctx, bson.M{"_id": "testuser2"})
 }
 
 func TestUpdateUser(t *testing.T) {
