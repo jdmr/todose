@@ -70,6 +70,16 @@ func TestGetTodos(t *testing.T) {
 	if len(todos) < 1 {
 		t.Errorf("Expected at least one todo, got %d", len(todos))
 	}
+	found := false
+	for _, todo := range todos {
+		if todo.ID == "testtodo" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("Expected to find testtodo, got %v", todos)
+	}
 
 	coll.DeleteOne(ctx, bson.M{"_id": "testtodo"})
 }
