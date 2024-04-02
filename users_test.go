@@ -199,3 +199,46 @@ func TestUpdateUser(t *testing.T) {
 		t.Errorf("Expected name Bob, got %s", user.Name)
 	}
 }
+
+func TestDeleteUser(t *testing.T) {
+	ctx := context.Background()
+	var err error
+	client, err = getMongoClient(ctx)
+	if err != nil {
+		t.Fatalf("Error connecting to MongoDB: %s\n", err)
+	}
+	defer client.Disconnect(ctx)
+
+	// Create a user
+	coll := getUsersCollection(client)
+	user := &User{
+		ID:   "testuser",
+		Name: "Alice",
+	}
+	_, err = coll.UpdateOne(
+		ctx,
+		bson.M{"_id": user.ID},
+		bson.M{"$set": user},
+		options.Update().SetUpsert(true),
+	)
+	if err != nil {
+		t.Fatalf("Error creating user: %s\n", err)
+	}
+
+	// Delete the user
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest("DELETE", "/api/v1/users/testuser", nil)
+	r = mux.SetURLVars(r, map[string]string{"userID": "testuser"})
+	deleteUser(w, r)
+
+	if w.Code != 200 && w.Code != 204 {
+		t.Errorf("Expected status code 200 or 204, got %d", w.Code)
+	}
+
+	// Check the user
+	user = &User{}
+	err = coll.FindOne(ctx, bson.M{"_id": "testuser"}).Decode(user)
+	if err == nil {
+		t.Errorf("Expected user to be deleted, got %v", user)
+	}
+}
