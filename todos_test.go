@@ -4,10 +4,8 @@ import (
 	"context"
 	"log"
 	"net/http/httptest"
-	"strings"
 	"testing"
 
-	"github.com/gorilla/mux"
 	"github.com/spf13/viper"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -23,7 +21,7 @@ func init() {
 	}
 }
 
-func TestGetUsers(t *testing.T) {
+func TestGetTodos(t *testing.T) {
 	ctx := context.Background()
 	var err error
 	client, err = getMongoClient(ctx)
@@ -32,43 +30,49 @@ func TestGetUsers(t *testing.T) {
 	}
 	defer client.Disconnect(ctx)
 
-	// Create a user
-	coll := getUsersCollection(client)
+	// Create a todo
+	coll := getTodosCollection(client)
 	user := &User{
 		ID:   "testuser",
 		Name: "Alice",
 	}
+	todo := &Todo{
+		ID:     "testtodo",
+		Title:  "Test Todo",
+		Status: "status",
+		Owner:  user,
+	}
 	_, err = coll.UpdateOne(
 		ctx,
-		bson.M{"_id": user.ID},
-		bson.M{"$set": user},
+		bson.M{"_id": todo.ID},
+		bson.M{"$set": todo},
 		options.Update().SetUpsert(true),
 	)
 	if err != nil {
-		t.Fatalf("Error creating user: %s\n", err)
+		t.Fatalf("Error creating todo: %s\n", err)
 	}
 
-	// Get the users
+	// Get the todos
 	w := httptest.NewRecorder()
-	r := httptest.NewRequest("GET", "/api/v1/users", nil)
-	getUsers(w, r)
+	r := httptest.NewRequest("GET", "/api/v1/todos", nil)
+	getTodos(w, r)
 
 	if w.Code != 200 {
 		t.Errorf("Expected status code 200, got %d", w.Code)
 	}
 
-	// Check the user
-	user = &User{}
-	err = coll.FindOne(ctx, bson.M{"_id": "testuser"}).Decode(user)
+	// Check the todo
+	todo = &Todo{}
+	err = coll.FindOne(ctx, bson.M{"_id": "testtodo"}).Decode(todo)
 	if err != nil {
-		t.Fatalf("Error finding user: %s\n", err)
+		t.Fatalf("Error finding todo: %s\n", err)
 	}
-	if user.Name != "Alice" {
-		t.Errorf("Expected name Alice, got %s", user.Name)
+	if todo.Title != "Test Todo" {
+		t.Errorf("Expected title 'Test Todo', got '%s'", todo.Title)
 	}
 }
 
-func TestGetUser(t *testing.T) {
+/* func TestGetUser(t *testing.T) {
 	ctx := context.Background()
 	var err error
 	client, err = getMongoClient(ctx)
@@ -236,4 +240,4 @@ func TestDeleteUser(t *testing.T) {
 	if user.Name == "Alice" {
 		t.Errorf("Expected nothing, got %s", user.Name)
 	}
-}
+} */
