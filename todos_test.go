@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 	"net/http/httptest"
 	"testing"
@@ -61,15 +62,16 @@ func TestGetTodos(t *testing.T) {
 		t.Errorf("Expected status code 200, got %d", w.Code)
 	}
 
-	// Check the todo
-	todo = &Todo{}
-	err = coll.FindOne(ctx, bson.M{"_id": "testtodo"}).Decode(todo)
+	todos := []*Todo{}
+	err = json.NewDecoder(w.Body).Decode(&todos)
 	if err != nil {
-		t.Fatalf("Error finding todo: %s\n", err)
+		t.Fatalf("Error decoding response: %s\n", err)
 	}
-	if todo.Title != "Test Todo" {
-		t.Errorf("Expected title 'Test Todo', got '%s'", todo.Title)
+	if len(todos) < 1 {
+		t.Errorf("Expected at least one todo, got %d", len(todos))
 	}
+
+	coll.DeleteOne(ctx, bson.M{"_id": "testtodo"})
 }
 
 /* func TestGetUser(t *testing.T) {
