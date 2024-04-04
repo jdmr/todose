@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 	"net/http/httptest"
 	"strings"
@@ -64,6 +65,8 @@ func TestGetUsers(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error decoding response: %s\n", err)
 	}
+  if len(users) < 1 {
+  t.Errorf("Expected at least one user, got %d", len(users))
 	found := false
 	for _, user := range users {
 		if user.ID == "testuser" {
@@ -117,10 +120,10 @@ func TestGetUser(t *testing.T) {
 	user = &User{}
 	err = json.NewDecoder(w.Body).Decode(user)
 	if err != nil {
-		t.Fatalf("Error finding user: %s\n", err)
+		t.Fatalf("Error decoding response: %s\n", err)
 	}
-	if user.Name != "Alice" {
-		t.Errorf("Expected name Alice, got %s", user.Name)
+	if testUser.Name != "Alice" {
+		t.Errorf("Expected name Alice, got %s", testUser.Name)
 	}
 
 	coll.DeleteOne(ctx, bson.M{"_id": "testuser"})
@@ -134,6 +137,9 @@ func TestCreateUser(t *testing.T) {
 		t.Fatalf("Error connecting to MongoDB: %s\n", err)
 	}
 	defer client.Disconnect(ctx)
+
+	coll := getUsersCollection(client)
+	coll.DeleteOne(ctx, bson.M{"_id": "testuser2"})
 
 	// Create the user
 	body := `{"id":"testuser","name": "Bob"}`

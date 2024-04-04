@@ -70,6 +70,9 @@ func TestGetTodos(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error decoding response: %s\n", err)
 	}
+	if len(todos) < 1 {
+		t.Errorf("Expected at least one todo, got %d", len(todos))
+	}
 	found := false
 	for _, todo := range todos {
 		if todo.ID == "testtodo" {
