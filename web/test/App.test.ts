@@ -39,6 +39,11 @@ export const restHandlers = [
             { id: 'test2', name: 'Jane Doe' }
         )
     }),
+    http.put('/api/v1/todos/test2', ({}) => {
+        return HttpResponse.json(
+            { id: 'test2', name: 'Jane Doe' }
+        )
+    }),
 ]
 const server = setupServer(...restHandlers)
 // Start server before all tests
@@ -92,10 +97,16 @@ test('del user', async () => {
     expect(wrapper.text()).toContain('TODOSUsersJohn DoeAdd UserTodosTodo 1Todo 2Add Todo')
 })
 
-
-
-
-
+test('select user', async () => {
+    const wrapper = mount(App)
+    await flushPromises()
+    await flushPromises()
+    expect(wrapper.text()).toContain('John Doe')
+    await wrapper.find('#select-User-1').trigger('click')
+    await flushPromises()
+    await flushPromises()
+    expect(wrapper.find('#select-User-1').classes('bg-blue-500')).toBe(true)
+})
 
 test('add todo', async () => {
     const wrapper = mount(App)
@@ -124,4 +135,23 @@ test('del todo', async () => {
     await flushPromises()
     await flushPromises()
     expect(wrapper.text()).toContain('TODOSUsersJohn DoeJane DoeAdd UserTodosTodo 1Add Todo')
+})
+
+test('toggle todo', async () => {
+    const wrapper = mount(App)
+    await flushPromises()
+    await flushPromises()
+    expect(wrapper.text()).toContain('John Doe')
+    expect(wrapper.text()).toContain('Todo 2')
+    await wrapper.find('#select-todo-1').trigger('click')
+    await flushPromises()
+    await flushPromises()
+    await flushPromises()
+    expect(wrapper.find('#select-todo-1').classes('bg-yellow-500')).toBe(true)
+    await wrapper.find('#select-todo-1').trigger('click')
+    await flushPromises()
+    await flushPromises()
+    await flushPromises()
+    expect(wrapper.find('#select-todo-1').classes('bg-green-500')).toBe(true)
+
 })

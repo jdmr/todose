@@ -14,7 +14,7 @@
                     <div class="flex items-center gap-2">
                         <button
                             class="p-2 rounded-full hover:brightness-110 hover:shadow-lg focus:brightness-110 focus:shadow-lg transition-all duration-200"
-                            :id='"select-"+index'
+                            :id='"select-User-"+index'
                             :class="[
                                 usr.id === selectedUser.id
                                     ? 'bg-blue-500 text-blue-50'
