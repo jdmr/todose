@@ -6,7 +6,9 @@ import (
 	"log"
 	"net/http/httptest"
 	"testing"
+	"strings"
 
+	"github.com/gorilla/mux"
 	"github.com/spf13/viper"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -62,6 +64,7 @@ func TestGetTodos(t *testing.T) {
 		t.Errorf("Expected status code 200, got %d", w.Code)
 	}
 
+	// Check the todo
 	todos := []*Todo{}
 	err = json.NewDecoder(w.Body).Decode(&todos)
 	if err != nil {
@@ -84,7 +87,7 @@ func TestGetTodos(t *testing.T) {
 	coll.DeleteOne(ctx, bson.M{"_id": "testtodo"})
 }
 
-/* func TestGetUser(t *testing.T) {
+func TestGetTodo(t *testing.T) {
 	ctx := context.Background()
 	var err error
 	client, err = getMongoClient(ctx)
@@ -93,44 +96,55 @@ func TestGetTodos(t *testing.T) {
 	}
 	defer client.Disconnect(ctx)
 
-	// Create a user
-	coll := getUsersCollection(client)
+	// Create a todo
+	coll := getTodosCollection(client)
 	user := &User{
 		ID:   "testuser",
 		Name: "Alice",
 	}
+	todo := &Todo{
+		ID:     "testtodo",
+		Title:  "Test Todo",
+		Status: "status",
+		Owner:  user,
+	}
 	_, err = coll.UpdateOne(
 		ctx,
-		bson.M{"_id": user.ID},
-		bson.M{"$set": user},
+		bson.M{"_id": todo.ID},
+		bson.M{"$set": todo},
 		options.Update().SetUpsert(true),
 	)
 	if err != nil {
-		t.Fatalf("Error creating user: %s\n", err)
+		t.Fatalf("Error creating todo: %s\n", err)
 	}
 
-	// Get the user
+	// Get the todo
 	w := httptest.NewRecorder()
-	r := httptest.NewRequest("GET", "/api/v1/users/testuser", nil)
-	r = mux.SetURLVars(r, map[string]string{"userID": "testuser"})
-	getUser(w, r)
+	r := httptest.NewRequest("GET", "/api/v1/todos/testtodo", nil)
+	r = mux.SetURLVars(r, map[string]string{"todoID": "testtodo"})
+	getTodo(w, r)
 
 	if w.Code != 200 {
 		t.Errorf("Expected status code 200, got %d", w.Code)
 	}
 
-	// Check the user
-	user = &User{}
-	err = coll.FindOne(ctx, bson.M{"_id": "testuser"}).Decode(user)
+	// Check the todo
+	todo = &Todo{}
+	err = json.NewDecoder(w.Body).Decode(todo)
 	if err != nil {
-		t.Fatalf("Error finding user: %s\n", err)
+		t.Fatalf("Error decoding response: %s\n", err)
 	}
-	if user.Name != "Alice" {
-		t.Errorf("Expected name Alice, got %s", user.Name)
+	if todo.Title != "Test Todo" {
+		t.Errorf("Expected title 'Test Todo', got '%s'", todo.Title)
 	}
+	if todo.Owner.Name != "Alice" {
+		t.Errorf("Expected name Alice, got %s", todo.Owner.Name)
+	}
+
+	coll.DeleteOne(ctx, bson.M{"_id": "testtodo"})
 }
 
-func TestCreateUser(t *testing.T) {
+func TestCreateTodo(t *testing.T) {
 	ctx := context.Background()
 	var err error
 	client, err = getMongoClient(ctx)
@@ -139,29 +153,34 @@ func TestCreateUser(t *testing.T) {
 	}
 	defer client.Disconnect(ctx)
 
-	// Create the user
-	body := `{"id":"testuser2","name": "Bob"}`
+	// Create the todo
+	body := `{"id":"testtodo","title":"Test Todo","status":"status","owner":{"id":"testuser","name":"Alice"}}`
 	w := httptest.NewRecorder()
-	r := httptest.NewRequest("POST", "/api/v1/users", strings.NewReader(body))
-	createUser(w, r)
+	r := httptest.NewRequest("POST", "/api/v1/todos", strings.NewReader(body))
+	createTodo(w, r)
 
 	if w.Code != 201 {
 		t.Errorf("Expected status code 201, got %d", w.Code)
 	}
 
-	// Check the user
-	user := &User{}
-	coll := getUsersCollection(client)
-	err = coll.FindOne(ctx, bson.M{"_id": "testuser2"}).Decode(user)
+	// Check the todo
+	todo := &Todo{}
+	coll := getTodosCollection(client)
+	err = coll.FindOne(ctx, bson.M{"_id": "testtodo"}).Decode(todo)
 	if err != nil {
-		t.Fatalf("Error finding user: %s\n", err)
+		t.Fatalf("Error finding todo: %s\n", err)
 	}
-	if user.Name != "Bob" {
-		t.Errorf("Expected name Bob, got %s", user.Name)
+	if todo.Title != "Test Todo" {
+		t.Errorf("Expected title 'Test Todo', got '%s'", todo.Title)
 	}
+	if todo.Owner.Name != "Alice" {
+		t.Errorf("Expected name Alice, got %s", todo.Owner.Name)
+	}
+
+	coll.DeleteOne(ctx, bson.M{"_id": "testtodo"})
 }
 
-func TestUpdateUser(t *testing.T) {
+func TestUpdateTodo(t *testing.T) {
 	ctx := context.Background()
 	var err error
 	client, err = getMongoClient(ctx)
@@ -170,45 +189,53 @@ func TestUpdateUser(t *testing.T) {
 	}
 	defer client.Disconnect(ctx)
 
-	// Create a user
-	coll := getUsersCollection(client)
+	// Create a todo
+	coll := getTodosCollection(client)
 	user := &User{
 		ID:   "testuser",
 		Name: "Alice",
 	}
+	todo := &Todo{
+		ID:     "testtodo",
+		Title:  "Test Todo",
+		Status: "status",
+		Owner:  user,
+	}
 	_, err = coll.UpdateOne(
 		ctx,
-		bson.M{"_id": user.ID},
-		bson.M{"$set": user},
+		bson.M{"_id": todo.ID},
+		bson.M{"$set": todo},
 		options.Update().SetUpsert(true),
 	)
 	if err != nil {
-		t.Fatalf("Error creating user: %s\n", err)
+		t.Fatalf("Error creating todo: %s\n", err)
 	}
 
-	// Update the user
-	body := `{"id":"testuser","name": "Bob"}`
+	// Update the todo
+	body := `{"id":"testtodo","title":"Testing Update","status":"status","owner":{"id":"testuser","name":"Alice"}}`
 	w := httptest.NewRecorder()
-	r := httptest.NewRequest("PUT", "/api/v1/users/testuser", strings.NewReader(body))
-	r = mux.SetURLVars(r, map[string]string{"userID": "testuser"})
-	updateUser(w, r)
+	r := httptest.NewRequest("PUT", "/api/v1/todos/testtodo", strings.NewReader(body))
+	r = mux.SetURLVars(r, map[string]string{"todoID": "testtodo"})
+	updateTodo(w, r)
 
 	if w.Code != 200 {
 		t.Errorf("Expected status code 200, got %d", w.Code)
 	}
 
-	// Check the user
-	user = &User{}
-	err = coll.FindOne(ctx, bson.M{"_id": "testuser"}).Decode(user)
+	// Check the todo
+	todo = &Todo{}
+	err = coll.FindOne(ctx, bson.M{"_id": "testtodo"}).Decode(todo)
 	if err != nil {
-		t.Fatalf("Error finding user: %s\n", err)
+		t.Fatalf("Error finding todo: %s\n", err)
 	}
-	if user.Name != "Bob" {
-		t.Errorf("Expected name Bob, got %s", user.Name)
+	if todo.Title != "Testing Update" {
+		t.Errorf("Expected title 'Testing Update', got '%s'", todo.Title)
 	}
+
+	coll.DeleteOne(ctx, bson.M{"_id": "testtodo"})
 }
 
-func TestDeleteUser(t *testing.T) {
+func TestDeleteTodo(t *testing.T) {
 	ctx := context.Background()
 	var err error
 	client, err = getMongoClient(ctx)
@@ -217,39 +244,42 @@ func TestDeleteUser(t *testing.T) {
 	}
 	defer client.Disconnect(ctx)
 
-	// Create a user
-	coll := getUsersCollection(client)
+	// Create a todo
+	coll := getTodosCollection(client)
 	user := &User{
 		ID:   "testuser",
 		Name: "Alice",
 	}
+	todo := &Todo{
+		ID:     "testtodo",
+		Title:  "Test Todo",
+		Status: "status",
+		Owner:  user,
+	}
 	_, err = coll.UpdateOne(
 		ctx,
-		bson.M{"_id": user.ID},
-		bson.M{"$set": user},
+		bson.M{"_id": todo.ID},
+		bson.M{"$set": todo},
 		options.Update().SetUpsert(true),
 	)
 	if err != nil {
-		t.Fatalf("Error creating user: %s\n", err)
+		t.Fatalf("Error creating todo: %s\n", err)
 	}
 
-	// Delete the user
+	// Delete the todo
 	w := httptest.NewRecorder()
-	r := httptest.NewRequest("DELETE", "/api/v1/users/testuser", nil)
-	r = mux.SetURLVars(r, map[string]string{"userID": "testuser"})
-	deleteUser(w, r)
+	r := httptest.NewRequest("DELETE", "/api/v1/todos/testtodo", nil)
+	r = mux.SetURLVars(r, map[string]string{"todoID": "testtodo"})
+	deleteTodo(w, r)
 
 	if w.Code != 204 {
 		t.Errorf("Expected status code 204, got %d", w.Code)
 	}
 
-	// Check the user
-	user = &User{}
-	err = coll.FindOne(ctx, bson.M{"_id": "testuser"}).Decode(user)
+	// Check the todo
+	todo = &Todo{}
+	err = coll.FindOne(ctx, bson.M{"_id": "testtodo"}).Decode(todo)
 	if err == nil {
-		t.Fatalf("Error not finding user: %s\n", err)
+		t.Fatalf("Error not finding todo: %s\n", err)
 	}
-	if user.Name == "Alice" {
-		t.Errorf("Expected nothing, got %s", user.Name)
-	}
-} */
+}

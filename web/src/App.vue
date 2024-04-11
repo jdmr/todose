@@ -7,12 +7,13 @@
             <h2 class="text-2xl tracking-wider">Users</h2>
             <div class="flex flex-col gap-2">
                 <div
-                    v-for="usr in users"
+                    v-for="(usr, index) in users"
                     :key="usr.id"
                     class="border p-2 rounded text-lg tracking-wider flex justify-between items-center"
                 >
                     <div class="flex items-center gap-2">
                         <button
+                            :id="'select-user-btn-' + index"
                             class="p-2 rounded-full hover:brightness-110 hover:shadow-lg focus:brightness-110 focus:shadow-lg transition-all duration-200"
                             :class="[
                                 usr.id === selectedUser.id
@@ -27,6 +28,7 @@
                     </div>
                     <div>
                         <button
+                            :id="'delete-user-btn-' + index"
                             class="bg-red-500 text-red-50 p-2 rounded-full hover:brightness-110 hover:shadow-lg focus:brightness-110 focus:shadow-lg transition-all duration-200"
                             @click="deleteUser(usr.id)"
                         >
@@ -61,12 +63,14 @@
             <h2 class="text-2xl tracking-wider">Todos</h2>
             <div class="flex flex-col gap-2">
                 <div
-                    v-for="td in todos"
+                    v-for="(td, index) in todos"
                     :key="td.id"
                     class="border p-2 rounded text-lg tracking-wider flex justify-between items-center"
                 >
                     <div class="flex gap-2 items-center">
-                        <button @click="toggleStatus(td)" class="p-2 rounded-full hover:brightness-110 hover:shadow-lg focus:brightness-110 focus:shadow-lg transition-all duration-200"
+                        <button 
+                        :id="'todo-status-btn-' + index" 
+                        @click="toggleStatus(td)" class="p-2 rounded-full hover:brightness-110 hover:shadow-lg focus:brightness-110 focus:shadow-lg transition-all duration-200"
                         :class="{
                             'bg-gray-300 text-gray-500': td.status === 'new',
                             'bg-yellow-500 text-yellow-50': td.status === 'started',
@@ -87,6 +91,7 @@
                     </div>
                     <div>
                         <button
+                            :id="'delete-todo-btn-' + index"
                             class="bg-red-500 text-red-50 p-2 rounded-full hover:brightness-110 hover:shadow-lg focus:brightness-110 focus:shadow-lg transition-all duration-200"
                             @click="deleteTodo(td.id)"
                         >
@@ -109,6 +114,7 @@
                         @keyup.enter="addTodo"
                     />
                     <button
+                        id="add-todo-btn"
                         class="bg-blue-500 text-blue-50 p-2 rounded-full hover:brightness-110 hover:shadow-lg focus:brightness-110 focus:shadow-lg transition-all duration-200"
                         @click="addTodo"
                     >
@@ -160,10 +166,13 @@ const addUser = async () => {
 }
 
 const deleteUser = async (id: string) => {
+    console.log('deleting user')
+    console.log('deleting at /api/v1/users/{userID}')
     await fetch(`/api/v1/users/${id}`, {
         method: 'DELETE'
     })
-    fetchUsers()
+    users.value.splice(users.value.findIndex((user) => user.id === id), 1)
+    console.log('finished deleting at /api/v1/users/{userID}', users.value)
 }
 
 const selectUser = (usr: User) => {
@@ -188,22 +197,23 @@ const addTodo = async () => {
     todo.value.id = nanoid()
     todo.value.status = 'new'
     todo.value.owner = selectedUser.value
-    await fetch('/api/v1/todos', {
+    const response = await fetch('/api/v1/todos', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify(todo.value)
     })
+    const data = await response.json()
+    todos.value.push(data)
     todo.value.title = ''
-    fetchTodos()
 }
 
 const deleteTodo = async (id: string) => {
     await fetch(`/api/v1/todos/${id}`, {
         method: 'DELETE'
     })
-    fetchTodos()
+    todos.value.splice(todos.value.findIndex((todo) => todo.id === id), 1)
 }
 
 const toggleStatus = async (td: Todo) => {
