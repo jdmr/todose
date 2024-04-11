@@ -18,6 +18,11 @@ export const restHandlers = [
             { id: 'test2', title: 'Todo 2', status: 'new', owner: { id: 'test1', name: 'John Doe'} }
         ])
     }),
+    http.post('/api/v1/users', ({}) => {
+        return HttpResponse.json(
+            { id: 'test3', name: 'New User' }
+        )
+    }),
 ]
 const server = setupServer(...restHandlers)
 // Start server before all tests
@@ -31,6 +36,7 @@ test('mount App', async () => {
     expect(App).toBeTruthy()
     const wrapper = mount(App)
     expect(wrapper.text()).toContain('TODOS')
+    console.log(wrapper.text())
 })
 
 test('fetch users', async () => {
@@ -39,4 +45,35 @@ test('fetch users', async () => {
     await flushPromises()
     expect(wrapper.text()).toContain('John Doe')
     expect(wrapper.text()).toContain('Jane Doe')
+    expect(wrapper.text()).toContain('Todo 1')
+})
+
+test('add user', async () => {
+    const wrapper = mount(App)
+    await flushPromises()
+    await flushPromises()
+    expect(wrapper.text()).toContain('John Doe')
+    expect(wrapper.text()).toContain('Jane Doe')
+    expect(wrapper.text()).toContain('Todo 1')
+    await wrapper.find('#name').setValue('New User')
+    await wrapper.find('#add-user-btn').trigger('click')
+    await flushPromises()
+    await flushPromises()
+    console.log(wrapper.text())
+    expect(wrapper.text()).toContain('New User')
+})
+
+test('add user by pressing enter key', async () => {
+    const wrapper = mount(App)
+    await flushPromises()
+    await flushPromises()
+    expect(wrapper.text()).toContain('John Doe')
+    expect(wrapper.text()).toContain('Jane Doe')
+    expect(wrapper.text()).toContain('Todo 1')
+    await wrapper.find('#name').setValue('New User')
+    await wrapper.find('#name').trigger('keyup.enter')
+    await flushPromises()
+    await flushPromises()
+    console.log(wrapper.text())
+    expect(wrapper.text()).toContain('New User')
 })

@@ -49,6 +49,7 @@
                         @keyup.enter="addUser"
                     />
                     <button
+                        id="add-user-btn"
                         class="bg-blue-500 text-blue-50 p-2 rounded-full hover:brightness-110 hover:shadow-lg focus:brightness-110 focus:shadow-lg transition-all duration-200"
                         @click="addUser"
                     >
@@ -142,16 +143,20 @@ const todo = ref({} as Todo)
 const selectedUser = ref({} as User)
 
 const addUser = async () => {
+    console.log('adding user')
     user.value.id = nanoid()
-    await fetch('/api/v1/users', {
+    console.log('posting to /api/v1/users')
+    const response = await fetch('/api/v1/users', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify(user.value)
     })
+    const data = await response.json()
+    users.value.push(data)
+    console.log('finished posting to /api/v1/users', users.value)
     user.value.name = ''
-    fetchUsers()
 }
 
 const deleteUser = async (id: string) => {
@@ -167,8 +172,11 @@ const selectUser = (usr: User) => {
 }
 
 const fetchUsers = async () => {
+    console.log('fetching users')
     const response = await fetch('/api/v1/users')
+    console.log('assigned users')
     users.value = await response.json()
+    console.log('fetched users', users.value)
 }
 
 const fetchTodos = async () => {
