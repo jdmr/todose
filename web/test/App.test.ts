@@ -77,3 +77,14 @@ test('add user by pressing enter key', async () => {
     console.log(wrapper.text())
     expect(wrapper.text()).toContain('New User')
 })
+
+test('select user', async () => {
+    const wrapper = mount(App)
+    await flushPromises()
+    await flushPromises()
+    expect(wrapper.text()).toContain('John Doe')
+    await wrapper.find('#select-user-test1').trigger('click')
+    await flushPromises()
+    await flushPromises()
+    expect(wrapper.find('#select-user-test1').classes('bg-blue-500')).toBe(true)
+})

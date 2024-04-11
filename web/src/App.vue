@@ -13,6 +13,7 @@
                 >
                     <div class="flex items-center gap-2">
                         <button
+                            :id="`select-user-${usr.id}`"
                             class="p-2 rounded-full hover:brightness-110 hover:shadow-lg focus:brightness-110 focus:shadow-lg transition-all duration-200"
                             :class="[
                                 usr.id === selectedUser.id
