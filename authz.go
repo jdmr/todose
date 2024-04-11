@@ -21,6 +21,7 @@ type LoginRequest struct {
 }
 
 type TodoClaims struct {
+	ID       string   `json:"id"`
 	Username string   `json:"username"`
 	Name     string   `json:"name"`
 	Scope    []string `json:"scope"`
@@ -39,7 +40,7 @@ func getLogin(w http.ResponseWriter, r *http.Request) {
 
 	coll := client.Database(viper.GetString("mongo.db")).Collection("users")
 	user := &User{}
-	err = coll.FindOne(r.Context(), bson.M{"name": lr.Username}).Decode(user)
+	err = coll.FindOne(r.Context(), bson.M{"username": lr.Username}).Decode(user)
 	if err != nil {
 		log.Printf("could not find user: %s\n", err)
 		http.Error(w, "could not find user: "+err.Error(), http.StatusUnauthorized)
@@ -72,6 +73,7 @@ func getLogin(w http.ResponseWriter, r *http.Request) {
 
 func createToken(user *User) (string, error) {
 	claims := &TodoClaims{
+		ID:       user.ID,
 		Username: user.Username,
 		Name:     user.Name,
 		Scope:    user.Scope,
