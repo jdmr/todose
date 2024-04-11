@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/rsa"
 	"log"
 	"net/http"
 	"os"
@@ -9,12 +10,15 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/gorilla/mux"
 	"github.com/spf13/viper"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
 var client *mongo.Client
+var privKey *rsa.PrivateKey
+var pubKey *rsa.PublicKey
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
@@ -28,6 +32,18 @@ func main() {
 	client, err = getMongoClient(ctx)
 	if err != nil {
 		log.Fatalf("Error connecting to MongoDB: %s\n", err)
+	}
+
+	pem := viper.GetString("rsa.private")
+	privKey, err = jwt.ParseRSAPrivateKeyFromPEM([]byte(pem))
+	if err != nil {
+		log.Fatalf("Error parsing private key: %s\n", err)
+	}
+
+	pem = viper.GetString("rsa.public")
+	pubKey, err = jwt.ParseRSAPublicKeyFromPEM([]byte(pem))
+	if err != nil {
+		log.Fatalf("Error parsing public key: %s\n", err)
 	}
 
 	router := mux.NewRouter()
@@ -44,6 +60,8 @@ func main() {
 	router.HandleFunc("/api/v1/todos/{todoID}", getTodo).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/todos/{todoID}", updateTodo).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/todos/{todoID}", deleteTodo).Methods(http.MethodDelete)
+
+	router.HandleFunc("/api/v1/login", getLogin).Methods(http.MethodPost)
 
 	srv := &http.Server{
 		Addr:    ":8080",

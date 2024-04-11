@@ -11,8 +11,11 @@ import (
 )
 
 type User struct {
-	ID   string `json:"id" bson:"_id"`
-	Name string `json:"name"`
+	ID       string   `json:"id" bson:"_id"`
+	Name     string   `json:"name"`
+	Username string   `json:"username"`
+	Password string   `json:"password"`
+	Scope    []string `json:"scope"`
 }
 
 func getUsers(w http.ResponseWriter, r *http.Request) {

@@ -19,6 +19,10 @@ type Todo struct {
 
 func getTodos(w http.ResponseWriter, r *http.Request) {
 	log.Println("Getting todos...")
+	if !validUser(r) {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
 	coll := client.Database(viper.GetString("mongo.db")).Collection("todos")
 	cursor, err := coll.Find(r.Context(), bson.M{})
 	if err != nil {
