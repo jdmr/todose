@@ -23,6 +23,9 @@ export const restHandlers = [
             { id: 'test3', name: 'New User' }
         )
     }),
+    http.delete('/api/v1/users/test2', ({}) => {
+        return HttpResponse.json()
+    })
 ]
 const server = setupServer(...restHandlers)
 // Start server before all tests
@@ -76,4 +79,40 @@ test('add user by pressing enter key', async () => {
     await flushPromises()
     console.log(wrapper.text())
     expect(wrapper.text()).toContain('New User')
+})
+
+test('delete user', async () => {
+    const wrapper = mount(App)
+    await flushPromises()
+    await flushPromises()
+    expect(wrapper.text()).toContain('Jane Doe')
+    await wrapper.find('#delete-user-btn-1').trigger('click')
+    await flushPromises()
+    await flushPromises()
+    console.log(wrapper.text())
+    expect(wrapper.text()).toBe('TODOSUsersJohn DoeAdd UserTodosTodo 1Todo 2Add Todo')
+})
+
+test('select user', async () => {
+    const wrapper = mount(App)
+    await flushPromises()
+    await flushPromises()
+    expect(wrapper.text()).toContain('Jane Doe')
+    await wrapper.find('#select-user-btn-1').trigger('click')
+    await flushPromises()
+    await flushPromises()
+    console.log(wrapper.find('#select-user-btn-1').classes('bg-blue-500'))
+    expect(wrapper.find('#select-user-btn-1').classes('bg-blue-500')).toBe(true)
+})
+
+test('add todo', async () => {
+
+})
+
+test('delete todo', async () => {
+
+})
+
+test('change todo status', async () => {
+
 })
