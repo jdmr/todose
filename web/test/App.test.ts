@@ -25,6 +25,17 @@ export const restHandlers = [
     }),
     http.delete('/api/v1/users/test2', ({}) => {
         return HttpResponse.json()
+    }),
+    http.post('/api/v1/todos', ({}) => {
+        return HttpResponse.json(
+            { id: 'test1', title: 'test todo', status: 'new', owner: { id: 'test1', name: 'John Doe'} }
+        )
+    }),
+    http.delete('/api/v1/todos/test2', ({}) => {
+        return HttpResponse.json()
+    }),
+    http.put('/api/v1/todos/test2', ({}) => {
+        return HttpResponse.json()
     })
 ]
 const server = setupServer(...restHandlers)
@@ -106,13 +117,51 @@ test('select user', async () => {
 })
 
 test('add todo', async () => {
-
+    const wrapper = mount(App)
+    await flushPromises()
+    await flushPromises()
+    expect(wrapper.text()).toContain('Todo 1')
+    await wrapper.find('#select-user-btn-0').trigger('click')
+    await wrapper.find('#title').setValue('test todo')
+    await wrapper.find('#add-todo-btn').trigger('click')
+    await flushPromises()
+    await flushPromises()
+    console.log(wrapper.text())
+    expect(wrapper.text()).toContain('test todo')
 })
 
 test('delete todo', async () => {
-
+    const wrapper = mount(App)
+    await flushPromises()
+    await flushPromises()
+    expect(wrapper.text()).toContain('Todo 2')
+    await wrapper.find('#delete-todo-btn-1').trigger('click')
+    await flushPromises()
+    await flushPromises()
+    console.log(wrapper.text())
+    expect(wrapper.text()).toBe('TODOSUsersJohn DoeJane DoeAdd UserTodosTodo 1Add Todo')
 })
 
-test('change todo status', async () => {
-
+test('cycle todo status', async () => {
+    const wrapper = mount(App)
+    await flushPromises()
+    await flushPromises()
+    expect(wrapper.text()).toContain('Todo 2')
+    await wrapper.find('#select-user-btn-1').trigger('click')
+    await flushPromises()
+    await wrapper.find('#todo-status-btn-1').trigger('click')
+    await flushPromises()
+    await flushPromises()
+    console.log(wrapper.find('#todo-status-btn-1').classes('bg-yellow-500'))
+    expect(wrapper.find('#todo-status-btn-1').classes('bg-yellow-500')).toBe(true)
+    await wrapper.find('#todo-status-btn-1').trigger('click')
+    await flushPromises()
+    await flushPromises()
+    console.log(wrapper.find('#todo-status-btn-1').classes('bg-green-500'))
+    expect(wrapper.find('#todo-status-btn-1').classes('bg-green-500')).toBe(true)
+    await wrapper.find('#todo-status-btn-1').trigger('click')
+    await flushPromises()
+    await flushPromises()
+    console.log(wrapper.find('#todo-status-btn-1').classes('bg-gray-300'))
+    expect(wrapper.find('#todo-status-btn-1').classes('bg-gray-300')).toBe(true)
 })
