@@ -71,7 +71,7 @@ test('add user by pressing enter key', async () => {
     expect(wrapper.text()).toContain('Jane Doe')
     expect(wrapper.text()).toContain('Todo 1')
     await wrapper.find('#name').setValue('New User')
-    await wrapper.find('#name').trigger('keydown.enter')
+    await wrapper.find('#name').trigger('keyup.enter')
     await flushPromises()
     await flushPromises()
     console.log(wrapper.text())
