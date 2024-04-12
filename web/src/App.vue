@@ -27,6 +27,7 @@
                     </div>
                     <div>
                         <button
+                            :id="`delete-user-${usr.id}`"
                             class="bg-red-500 text-red-50 p-2 rounded-full hover:brightness-110 hover:shadow-lg focus:brightness-110 focus:shadow-lg transition-all duration-200"
                             @click="deleteUser(usr.id)"
                         >
@@ -163,7 +164,7 @@ const deleteUser = async (id: string) => {
     await fetch(`/api/v1/users/${id}`, {
         method: 'DELETE'
     })
-    fetchUsers()
+    users.value = users.value.filter((usr) => usr.id !== id)
 }
 
 const selectUser = (usr: User) => {
