@@ -218,26 +218,23 @@ const deleteTodo = async (id: string) => {
 }
 
 const toggleStatus = async (td: Todo) => {
-    console.log(`Toggling status of todo: ${td.title}`)
-    switch (td.status) {
-        case 'new':
-            td.status = 'started'
-            break
-        case 'started':
-            td.status = 'done'
-            break
-        case 'done':
-            td.status = 'new'
-            break
+    console.log('toggling status')
+    const status = {
+        new: 'started',
+        started: 'done',
+        done: 'new'
     }
-
-    await fetch(`/api/v1/todos/${td.id}`, {
+    td.status = status[td.status as keyof typeof status];
+    console.log('posting to /api/v1/todos')
+    const response = await fetch(`/api/v1/todos/${td.id}`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify(td)
     })
+    const data = await response.json()
+    console.log('finished posting to /api/v1/todos', data)
 }
 
 onMounted(() => {

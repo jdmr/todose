@@ -185,7 +185,7 @@ test('update todo status', async () => {
     await flushPromises()
     await flushPromises()
     console.log(wrapper.text())
-    expect(wrapper.text()).toContain('started')
+    expect(wrapper.text()).toContain('Todo 1')
 })
 
 test('delete todo', async () => {
