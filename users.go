@@ -60,6 +60,10 @@ func getUsers(w http.ResponseWriter, r *http.Request) {
 
 func getUser(w http.ResponseWriter, r *http.Request) {
 	log.Println("Getting user...")
+	if !validUser(r) {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
 	params := mux.Vars(r)
 	userID := params["userID"]
 	if userID == "" {
@@ -89,6 +93,10 @@ func getUser(w http.ResponseWriter, r *http.Request) {
 
 func createUser(w http.ResponseWriter, r *http.Request) {
 	log.Println("Creating user...")
+	if !validUser(r) {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
 	user := &User{}
 	err := json.NewDecoder(r.Body).Decode(user)
 	if err != nil {
@@ -125,6 +133,10 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 
 func updateUser(w http.ResponseWriter, r *http.Request) {
 	log.Println("Updating user...")
+	if !validUser(r) {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
 	params := mux.Vars(r)
 	userID := params["userID"]
 	if userID == "" {
@@ -158,6 +170,10 @@ func updateUser(w http.ResponseWriter, r *http.Request) {
 
 func deleteUser(w http.ResponseWriter, r *http.Request) {
 	log.Println("Deleting user...")
+	if !validUser(r) {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
 	params := mux.Vars(r)
 	userID := params["userID"]
 	if userID == "" {

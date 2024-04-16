@@ -173,7 +173,8 @@ const addUser = async () => {
     const response = await fetch('/api/v1/users', {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
         },
         body: JSON.stringify(user.value)
     })
@@ -185,7 +186,10 @@ const addUser = async () => {
 
 const deleteUser = async (id: string) => {
     await fetch(`/api/v1/users/${id}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
     })
     fetchUsers()
 }
@@ -223,7 +227,8 @@ const addTodo = async () => {
     await fetch('/api/v1/todos', {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
         },
         body: JSON.stringify(todo.value)
     })
@@ -233,7 +238,10 @@ const addTodo = async () => {
 
 const deleteTodo = async (id: string) => {
     await fetch(`/api/v1/todos/${id}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
     })
     fetchTodos()
 }
@@ -255,7 +263,8 @@ const toggleStatus = async (td: Todo) => {
     await fetch(`/api/v1/todos/${td.id}`, {
         method: 'PUT',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
         },
         body: JSON.stringify(td)
     })
