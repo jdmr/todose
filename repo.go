@@ -25,3 +25,7 @@ func getMongoClient(ctx context.Context) (*mongo.Client, error) {
 func getUsersCollection(client *mongo.Client) *mongo.Collection {
 	return client.Database(viper.GetString("mongo.db")).Collection("users")
 }
+
+func getTodosCollection(client *mongo.Client) *mongo.Collection {
+	return client.Database(viper.GetString("mongo.db")).Collection("todos")
+}

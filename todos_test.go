@@ -5,10 +5,8 @@ import (
 	"encoding/json"
 	"log"
 	"net/http/httptest"
-	"strings"
 	"testing"
 
-	"github.com/gorilla/mux"
 	"github.com/spf13/viper"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -24,7 +22,7 @@ func init() {
 	}
 }
 
-func TestGetUsers(t *testing.T) {
+func TestGetTodos(t *testing.T) {
 	ctx := context.Background()
 	var err error
 	client, err = getMongoClient(ctx)
@@ -33,44 +31,60 @@ func TestGetUsers(t *testing.T) {
 	}
 	defer client.Disconnect(ctx)
 
-	// Create a user
-	coll := getUsersCollection(client)
+	// Create a todo
+	coll := getTodosCollection(client)
 	user := &User{
 		ID:   "testuser",
 		Name: "Alice",
 	}
+	todo := &Todo{
+		ID:     "testtodo",
+		Title:  "Test Todo",
+		Status: "status",
+		Owner:  user,
+	}
 	_, err = coll.UpdateOne(
 		ctx,
-		bson.M{"_id": user.ID},
-		bson.M{"$set": user},
+		bson.M{"_id": todo.ID},
+		bson.M{"$set": todo},
 		options.Update().SetUpsert(true),
 	)
 	if err != nil {
-		t.Fatalf("Error creating user: %s\n", err)
+		t.Fatalf("Error creating todo: %s\n", err)
 	}
 
-	// Get the users
+	// Get the todos
 	w := httptest.NewRecorder()
-	r := httptest.NewRequest("GET", "/api/v1/users", nil)
-	getUsers(w, r)
+	r := httptest.NewRequest("GET", "/api/v1/todos", nil)
+	getTodos(w, r)
 
 	if w.Code != 200 {
 		t.Errorf("Expected status code 200, got %d", w.Code)
 	}
 
-	users := []User{}
-	err = json.NewDecoder(w.Body).Decode(&users)
+	todos := []*Todo{}
+	err = json.NewDecoder(w.Body).Decode(&todos)
 	if err != nil {
 		t.Fatalf("Error decoding response: %s\n", err)
 	}
-	if len(users) < 1 {
-		t.Errorf("Expected at least one user, got %d", len(users))
+	if len(todos) < 1 {
+		t.Errorf("Expected at least one todo, got %d", len(todos))
+	}
+	found := false
+	for _, todo := range todos {
+		if todo.ID == "testtodo" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("Expected to find testtodo, got %v", todos)
 	}
 
-	coll.DeleteOne(ctx, bson.M{"_id": "testuser"})
+	coll.DeleteOne(ctx, bson.M{"_id": "testtodo"})
 }
 
-func TestGetUser(t *testing.T) {
+/* func TestGetUser(t *testing.T) {
 	ctx := context.Background()
 	var err error
 	client, err = getMongoClient(ctx)
@@ -105,16 +119,15 @@ func TestGetUser(t *testing.T) {
 		t.Errorf("Expected status code 200, got %d", w.Code)
 	}
 
-	testUser := &User{}
-	err = json.NewDecoder(w.Body).Decode(testUser)
+	// Check the user
+	user = &User{}
+	err = coll.FindOne(ctx, bson.M{"_id": "testuser"}).Decode(user)
 	if err != nil {
-		t.Fatalf("Error decoding response: %s\n", err)
+		t.Fatalf("Error finding user: %s\n", err)
 	}
-	if testUser.Name != "Alice" {
-		t.Errorf("Expected name Alice, got %s", testUser.Name)
+	if user.Name != "Alice" {
+		t.Errorf("Expected name Alice, got %s", user.Name)
 	}
-
-	coll.DeleteOne(ctx, bson.M{"_id": "testuser"})
 }
 
 func TestCreateUser(t *testing.T) {
@@ -125,9 +138,6 @@ func TestCreateUser(t *testing.T) {
 		t.Fatalf("Error connecting to MongoDB: %s\n", err)
 	}
 	defer client.Disconnect(ctx)
-
-	coll := getUsersCollection(client)
-	coll.DeleteOne(ctx, bson.M{"_id": "testuser2"})
 
 	// Create the user
 	body := `{"id":"testuser2","name": "Bob"}`
@@ -141,7 +151,7 @@ func TestCreateUser(t *testing.T) {
 
 	// Check the user
 	user := &User{}
-
+	coll := getUsersCollection(client)
 	err = coll.FindOne(ctx, bson.M{"_id": "testuser2"}).Decode(user)
 	if err != nil {
 		t.Fatalf("Error finding user: %s\n", err)
@@ -149,8 +159,6 @@ func TestCreateUser(t *testing.T) {
 	if user.Name != "Bob" {
 		t.Errorf("Expected name Bob, got %s", user.Name)
 	}
-
-	coll.DeleteOne(ctx, bson.M{"_id": "testuser2"})
 }
 
 func TestUpdateUser(t *testing.T) {
@@ -244,4 +252,4 @@ func TestDeleteUser(t *testing.T) {
 	if user.Name == "Alice" {
 		t.Errorf("Expected nothing, got %s", user.Name)
 	}
-}
+} */

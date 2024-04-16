@@ -25,7 +25,7 @@ func main() {
 		log.Fatalf("Error reading config file: %s\n", err)
 	}
 	ctx := context.Background()
-	client, err := getMongoClient(ctx)
+	client, err = getMongoClient(ctx)
 	if err != nil {
 		log.Fatalf("Error connecting to MongoDB: %s\n", err)
 	}

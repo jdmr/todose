@@ -19,7 +19,7 @@
                                     ? 'bg-blue-500 text-blue-50'
                                     : 'bg-gray-300 text-gray-800'
                             ]"
-                            @click="selectUser(usr)"
+                            @click="selectUser(usr)" :id="`select-user-btn-${usr.id}`"
                         >
                             <i class="i-mdi:check h-8 w-8"></i>
                         </button>
@@ -27,6 +27,7 @@
                     </div>
                     <div>
                         <button
+                            :id="'delete-user-btn'+usr.id"
                             class="bg-red-500 text-red-50 p-2 rounded-full hover:brightness-110 hover:shadow-lg focus:brightness-110 focus:shadow-lg transition-all duration-200"
                             @click="deleteUser(usr.id)"
                         >
@@ -49,6 +50,7 @@
                         @keyup.enter="addUser"
                     />
                     <button
+                        id="add-user-btn"
                         class="bg-blue-500 text-blue-50 p-2 rounded-full hover:brightness-110 hover:shadow-lg focus:brightness-110 focus:shadow-lg transition-all duration-200"
                         @click="addUser"
                     >
@@ -65,7 +67,7 @@
                     class="border p-2 rounded text-lg tracking-wider flex justify-between items-center"
                 >
                     <div class="flex gap-2 items-center">
-                        <button @click="toggleStatus(td)" class="p-2 rounded-full hover:brightness-110 hover:shadow-lg focus:brightness-110 focus:shadow-lg transition-all duration-200"
+                        <button @click="toggleStatus(td)" :id="`select-todo-btn-${td.id}`" class="p-2 rounded-full hover:brightness-110 hover:shadow-lg focus:brightness-110 focus:shadow-lg transition-all duration-200"
                         :class="{
                             'bg-gray-300 text-gray-500': td.status === 'new',
                             'bg-yellow-500 text-yellow-50': td.status === 'started',
@@ -86,6 +88,7 @@
                     </div>
                     <div>
                         <button
+                            :id="`delete-todo-btn-${td.id}`"
                             class="bg-red-500 text-red-50 p-2 rounded-full hover:brightness-110 hover:shadow-lg focus:brightness-110 focus:shadow-lg transition-all duration-200"
                             @click="deleteTodo(td.id)"
                         >
@@ -108,6 +111,7 @@
                         @keyup.enter="addTodo"
                     />
                     <button
+                        id="add-todo-btn"
                         class="bg-blue-500 text-blue-50 p-2 rounded-full hover:brightness-110 hover:shadow-lg focus:brightness-110 focus:shadow-lg transition-all duration-200"
                         @click="addTodo"
                     >
@@ -142,23 +146,28 @@ const todo = ref({} as Todo)
 const selectedUser = ref({} as User)
 
 const addUser = async () => {
+    console.log('adding user')
     user.value.id = nanoid()
-    await fetch('/api/v1/users', {
+    console.log('posting to /api/v1/users')
+    const response = await fetch('/api/v1/users', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify(user.value)
     })
+    const data = await response.json()
+    users.value.push(data)
+    console.log('finished posting to /api/v1/users', users.value)
     user.value.name = ''
-    fetchUsers()
 }
 
 const deleteUser = async (id: string) => {
     await fetch(`/api/v1/users/${id}`, {
         method: 'DELETE'
     })
-    fetchUsers()
+    users.value = users.value.filter((usr) => usr.id !== id)
+    console.log('deleted user', users.value)
 }
 
 const selectUser = (usr: User) => {
@@ -167,8 +176,11 @@ const selectUser = (usr: User) => {
 }
 
 const fetchUsers = async () => {
+    console.log('fetching users')
     const response = await fetch('/api/v1/users')
+    console.log('assigned users')
     users.value = await response.json()
+    console.log('fetched users', users.value)
 }
 
 const fetchTodos = async () => {
@@ -187,15 +199,15 @@ const addTodo = async () => {
         },
         body: JSON.stringify(todo.value)
     })
+    todos.value.push({ ...todo.value })
     todo.value.title = ''
-    fetchTodos()
 }
 
 const deleteTodo = async (id: string) => {
     await fetch(`/api/v1/todos/${id}`, {
         method: 'DELETE'
     })
-    fetchTodos()
+    todos.value = todos.value.filter((td) => td.id !== id)
 }
 
 const toggleStatus = async (td: Todo) => {

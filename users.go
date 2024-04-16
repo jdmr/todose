@@ -84,6 +84,7 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 	user := &User{}
 	err := json.NewDecoder(r.Body).Decode(user)
 	if err != nil {
+		log.Println("decode error")
 		http.Error(w, "could not decode user: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -91,6 +92,7 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 	coll := client.Database(viper.GetString("mongo.db")).Collection("users")
 	_, err = coll.InsertOne(r.Context(), user)
 	if err != nil {
+		log.Println("insert error")
 		http.Error(w, "could not insert user: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -99,6 +101,7 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(user)
 	if err != nil {
+		log.Println("encode error")
 		http.Error(w, "could not encode user: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
