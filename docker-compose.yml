@@ -1,0 +1,20 @@
+version: '3.8'
+services:
+  web:
+    build: .
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+  db:
+    image: mongodb/mongodb-community-server:6.0-ubi8
+    restart: always
+    ports:
+      - '27017:27017'
+    environment:
+      MONGODB_INITDB_ROOT_USERNAME: admin
+      MONGODB_INITDB_ROOT_PASSWORD: test123
+#     volumes:
+#       - data:/data/db
+# volumes:
+#   data:

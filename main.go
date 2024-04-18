@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path"
 	"syscall"
 	"time"
 
@@ -63,6 +64,8 @@ func main() {
 
 	router.HandleFunc("/api/v1/login", getLogin).Methods(http.MethodPost)
 
+	router.PathPrefix("/").Handler(vueServe(http.Dir("./web/dist/")))
+
 	srv := &http.Server{
 		Addr:    ":8080",
 		Handler: router,
@@ -90,4 +93,26 @@ func main() {
 	log.Println("Server gracefully stopped!")
 
 	cancel()
+}
+
+func vueServe(fs http.FileSystem) http.Handler {
+	log.Printf("creating file handler")
+	fsh := http.FileServer(fs)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("Opening: %s", path.Clean(r.URL.Path))
+		_, err := fs.Open(path.Clean(r.URL.Path))
+		if os.IsNotExist(err) {
+			index, err := os.ReadFile("./web/dist/index.html")
+			if err != nil {
+				log.Printf("Could not read ./web/dist/index.html: %v", err)
+				w.WriteHeader(http.StatusNotFound)
+				return
+			}
+			w.WriteHeader(http.StatusOK)
+			w.Header().Set("Content-Type", "text/html; charset=UTF-8")
+			w.Write(index)
+			return
+		}
+		fsh.ServeHTTP(w, r)
+	})
 }
