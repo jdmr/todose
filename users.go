@@ -8,15 +8,23 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/spf13/viper"
 	"go.mongodb.org/mongo-driver/bson"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type User struct {
-	ID   string `json:"id" bson:"_id"`
-	Name string `json:"name"`
+	ID       string   `json:"id" bson:"_id"`
+	Name     string   `json:"name"`
+	Username string   `json:"username"`
+	Password string   `json:"password"`
+	Scope    []string `json:"scope"`
 }
 
 func getUsers(w http.ResponseWriter, r *http.Request) {
 	log.Println("Getting users...")
+	if !validUser(r) {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
 	coll := client.Database(viper.GetString("mongo.db")).Collection("users")
 	cursor, err := coll.Find(r.Context(), bson.M{})
 	if err != nil {
@@ -52,6 +60,10 @@ func getUsers(w http.ResponseWriter, r *http.Request) {
 
 func getUser(w http.ResponseWriter, r *http.Request) {
 	log.Println("Getting user...")
+	if !validUser(r) {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
 	params := mux.Vars(r)
 	userID := params["userID"]
 	if userID == "" {
@@ -81,6 +93,10 @@ func getUser(w http.ResponseWriter, r *http.Request) {
 
 func createUser(w http.ResponseWriter, r *http.Request) {
 	log.Println("Creating user...")
+	if !validUser(r) {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
 	user := &User{}
 	err := json.NewDecoder(r.Body).Decode(user)
 	if err != nil {
@@ -88,6 +104,14 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "could not decode user: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	bcryptPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	if err != nil {
+		log.Println("bcrypt error")
+		http.Error(w, "could not bcrypt password: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	user.Password = string(bcryptPassword)
 
 	coll := client.Database(viper.GetString("mongo.db")).Collection("users")
 	_, err = coll.InsertOne(r.Context(), user)
@@ -109,6 +133,10 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 
 func updateUser(w http.ResponseWriter, r *http.Request) {
 	log.Println("Updating user...")
+	if !validUser(r) {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
 	params := mux.Vars(r)
 	userID := params["userID"]
 	if userID == "" {
@@ -142,6 +170,10 @@ func updateUser(w http.ResponseWriter, r *http.Request) {
 
 func deleteUser(w http.ResponseWriter, r *http.Request) {
 	log.Println("Deleting user...")
+	if !validUser(r) {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
 	params := mux.Vars(r)
 	userID := params["userID"]
 	if userID == "" {

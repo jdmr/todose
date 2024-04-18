@@ -19,6 +19,10 @@ type Todo struct {
 
 func getTodos(w http.ResponseWriter, r *http.Request) {
 	log.Println("Getting todos...")
+	if !validUser(r) {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
 	coll := client.Database(viper.GetString("mongo.db")).Collection("todos")
 	cursor, err := coll.Find(r.Context(), bson.M{})
 	if err != nil {
@@ -54,6 +58,10 @@ func getTodos(w http.ResponseWriter, r *http.Request) {
 
 func getTodo(w http.ResponseWriter, r *http.Request) {
 	log.Println("Getting todo...")
+	if !validUser(r) {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
 	params := mux.Vars(r)
 	todoID := params["todoID"]
 	if todoID == "" {
@@ -79,6 +87,10 @@ func getTodo(w http.ResponseWriter, r *http.Request) {
 
 func createTodo(w http.ResponseWriter, r *http.Request) {
 	log.Println("Creating todo...")
+	if !validUser(r) {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
 	todo := &Todo{}
 	err := json.NewDecoder(r.Body).Decode(todo)
 	if err != nil {
@@ -102,6 +114,10 @@ func createTodo(w http.ResponseWriter, r *http.Request) {
 
 func updateTodo(w http.ResponseWriter, r *http.Request) {
 	log.Println("Updating todo...")
+	if !validUser(r) {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
 	params := mux.Vars(r)
 	todoID := params["todoID"]
 	if todoID == "" {
@@ -132,6 +148,10 @@ func updateTodo(w http.ResponseWriter, r *http.Request) {
 
 func deleteTodo(w http.ResponseWriter, r *http.Request) {
 	log.Println("Deleting todo...")
+	if !validUser(r) {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
 	params := mux.Vars(r)
 	todoID := params["todoID"]
 	if todoID == "" {
