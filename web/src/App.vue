@@ -87,7 +87,7 @@
                         <button
                             id="add-user-btn"
                             class="bg-blue-500 text-blue-50 p-2 rounded-full hover:brightness-110 hover:shadow-lg focus:brightness-110 focus:shadow-lg transition-all duration-200"
-                            @click="addUser"
+                            @click="openUserDialog"
                         >
                             <i class="i-mdi:plus h-8 w-8"></i>
                         </button>
@@ -157,23 +157,96 @@
                             <i class="i-mdi:plus h-8 w-8"></i>
                         </button>
                     </div>
+                    <button
+                        class="mt-4 bg-gray-500 text-gray-50 p-2 rounded-full hover:brightness-110 hover:shadow-lg focus:brightness-110 focus:shadow-lg transition-all duration-200"
+                        @click="logout"
+                    >
+                        LOGOUT
+                    </button>
                 </div>
             </div>
         </div>
-        <dialog ref="userDialog"></dialog>
+        <dialog ref="userDialog">
+            <div class="p-2 rounded-xl flex flex-col gap-4">
+                <div class="flex justify-between items-center gap-4">
+                    <div class="text-lg">
+                        Please provide more information to add user
+                    </div>
+                    <div>
+                        <button
+                            class="bg-red-500 text-red-50 p-2 w-full rounded-full hover:brightness-110 hover:shadow-lg focus:brightness-110 focus:shadow-lg transition-all duration-200"
+                            @click="closeUserDialog"
+                        >
+                            <i class="i-mdi:close h-6 w-6"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="flex flex-col gap-2">
+                    <label for="dialog-username" class="text-lg tracking-wider"
+                        >Username</label
+                    >
+                    <input
+                        v-model="user.username"
+                        type="text"
+                        id="dialog-username"
+                        name="username"
+                        class="border border-gray-300 rounded p-2 text-xl tracking-wider bg-gray-100 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                </div>
+                <div class="flex flex-col gap-2">
+                    <label for="dialog-password" class="text-lg tracking-wider"
+                        >Password</label
+                    >
+                    <input
+                        v-model="user.password"
+                        type="password"
+                        id="dialog-password"
+                        name="password"
+                        class="border border-gray-300 rounded p-2 text-xl tracking-wider bg-gray-100 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                </div>
+                <fieldset class="flex flex-col gap-2 border rounded-lg p-2">
+                    <legend>Roles</legend>
+                    <label class="flex items-center gap-2">
+                        <input
+                            type="checkbox"
+                            value="admin"
+                            v-model="user.scope"
+                        />
+                        <span>Admin</span>
+                    </label>
+                    <label class="flex items-center gap-2">
+                        <input
+                            type="checkbox"
+                            value="user"
+                            v-model="user.scope"
+                        />
+                        <span>User</span>
+                    </label>
+                </fieldset>
+                <button
+                    class="bg-blue-500 text-blue-50 px-2 py-4 w-full rounded-lg hover:brightness-110 hover:shadow-lg focus:brightness-110 focus:shadow-lg transition-all duration-200 flex items-center justify-center gap-1"
+                    @click="addUser"
+                >
+                    <i class="i-mdi:plus h-6 w-6"></i>
+                    <span class="text-xl">Add User</span>
+                </button>
+            </div>
+        </dialog>
     </div>
 </template>
 
 <script setup lang="ts">
 import { jwtDecode } from 'jwt-decode';
 import { nanoid } from 'nanoid';
-import { ref } from 'vue';
+import { nextTick, onMounted, ref } from 'vue';
 
 interface User {
     id: string
     name: string
     username: string
     password: string
+    scope: string[]
 }
 
 interface Todo {
@@ -184,12 +257,15 @@ interface Todo {
 }
 
 const users = ref({} as User[])
-const user = ref({} as User)
+const user = ref({
+    scope: [] as string[]
+} as User)
 const todos = ref({} as Todo[])
 const todo = ref({} as Todo)
 const selectedUser = ref({} as User)
 const authenticated = ref({} as User)
 let token = ''
+const userDialog = ref<HTMLDialogElement | null>(null)
 
 const login = async () => {
     console.log('logging in')
@@ -203,20 +279,51 @@ const login = async () => {
         })
         const data = await response.json()
         token = data.token
-        const td = jwtDecode(data.token) as User
+        sessionStorage.setItem('token', token)
+        const td = jwtDecode(token) as User
         authenticated.value = {
             id: td.id,
             name: td.name,
             username: td.username,
-            password: ''
+            password: '',
+            scope: td.scope
         }
         fetchUsers()
         fetchTodos()
         console.log('logged in', authenticated.value)
+        user.value = {
+            name: '',
+            username: '',
+            password: '',
+            scope: [] as string[]
+        } as User
     } catch (error) {
         console.error('error logging in', error)
         alert('Invalid credentials')
     }
+}
+
+const openUserDialog = () => {
+    console.log('opening user dialog')
+    if (!userDialog.value) {
+        return
+    }
+    if (user.value.name === '') {
+        alert('Please enter a name')
+        return
+    }
+    userDialog.value.showModal()
+    nextTick(() => {
+        userDialog.value?.querySelector('input')?.focus()
+    })
+}
+
+const closeUserDialog = () => {
+    console.log('closing user dialog')
+    if (!userDialog.value) {
+        return
+    }
+    userDialog.value.close()
 }
 
 const addUser = async () => {
@@ -233,7 +340,10 @@ const addUser = async () => {
     const data = await response.json()
     users.value.push(data)
     console.log('finished posting to /api/v1/users', users.value)
-    user.value.name = ''
+    user.value = {
+        scope: [] as string[]
+    } as User
+    userDialog.value?.close()
 }
 
 const deleteUser = async (id: string) => {
@@ -313,4 +423,34 @@ const toggleStatus = async (td: Todo) => {
         body: JSON.stringify(td)
     })
 }
+
+const logout = () => {
+    sessionStorage.removeItem('token')
+    authenticated.value = {
+        id: '',
+        name: '',
+        username: '',
+        password: '',
+        scope: []
+    }
+    users.value = []
+    todos.value = []
+}
+
+onMounted(() => {
+    token = sessionStorage.getItem('token') || ''
+    if (!token) {
+        return
+    }
+    const td = jwtDecode(token) as User
+    authenticated.value = {
+        id: td.id,
+        name: td.name,
+        username: td.username,
+        password: '',
+        scope: td.scope
+    }
+    fetchUsers()
+    fetchTodos()
+})
 </script>
